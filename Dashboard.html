@@ -2,93 +2,88 @@
 <html lang="en" class="bg-gray-100 text-gray-900">
 <head>
   <meta charset="UTF-8" />
-  <title>Job Automation Dashboard</title>
+  <title>Create New Job Post</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen p-6">
-  <div class="max-w-7xl mx-auto space-y-6">
+<body class="min-h-screen p-6 flex items-center justify-center">
+  <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl space-y-6">
+    <h1 class="text-2xl font-bold text-center">Create New Job Post</h1>
+    
+    <form id="jobForm" class="space-y-4" enctype="multipart/form-data">
+      <!-- Job Title -->
+      <input type="text" name="job_title" placeholder="Job Title" required class="border rounded p-2 w-full" />
 
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
-      <button id="openUploadModal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        + Upload JD & Create Job Post
+      <!-- Workplace -->
+      <select name="workplace" required class="border rounded p-2 w-full">
+        <option value="">Select Workplace</option>
+        <option value="ON_SITE">On-Site</option>
+        <option value="HYBRID">Hybrid</option>
+        <option value="REMOTE">Remote</option>
+      </select>
+
+      <!-- Email -->
+      <input type="email" name="email" placeholder="Your Email" required class="border rounded p-2 w-full" />
+
+      <!-- Experience -->
+      <input type="number" name="experience_years" placeholder="Experience (Years)" required class="border rounded p-2 w-full" />
+
+      <!-- Key Skills -->
+      <input type="text" name="key_skills" placeholder="Key Skills (comma separated)" required class="border rounded p-2 w-full" />
+
+      <!-- Modes of Search -->
+      <label class="block text-sm font-medium">Modes of Search (Ctrl+Click for multiple):</label>
+      <select name="modes_of_search" multiple required class="border rounded p-2 w-full">
+        <option value="Telegram">Telegram</option>
+        <option value="Social Media posting">Social Media posting</option>
+        <option value="Linkedin Job posting">LinkedIn Job posting</option>
+        <option value="Whatsapp Groups">WhatsApp Groups</option>
+      </select>
+
+      <!-- JD Upload -->
+      <label class="block text-sm font-medium mt-4">Upload JD (PDF only):</label>
+      <input type="file" name="jd_file" accept="application/pdf" required class="border rounded p-2 w-full" />
+
+      <!-- Submit -->
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full">
+        Submit Job Post
       </button>
-    </div>
+    </form>
 
-    <!-- Job Table -->
-    <div class="bg-white p-4 rounded-lg shadow-md overflow-auto">
-      <h2 class="text-xl font-bold mb-4">All Job Posts</h2>
-      <table class="w-full border table-auto text-sm">
-        <thead>
-          <tr class="bg-gray-200 text-left">
-            <th class="p-2 border">Title</th>
-            <th class="p-2 border">Workplace</th>
-            <th class="p-2 border">Experience</th>
-            <th class="p-2 border">Status</th>
-            <th class="p-2 border">Modes</th>
-            <th class="p-2 border">Posted At</th>
-          </tr>
-        </thead>
-        <tbody id="jobTableBody">
-          <!-- Filled dynamically -->
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Upload Modal -->
-    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-      <div class="bg-white p-4 rounded shadow-lg w-full max-w-3xl relative">
-        <button id="closeUploadModal" class="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black">&times;</button>
-        <iframe src="https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a"
-                class="w-full h-[600px] border rounded-lg"></iframe>
-      </div>
-    </div>
-
+    <div id="status" class="text-center text-sm text-gray-600"></div>
   </div>
 
   <script>
-    async function loadJobs() {
+    document.getElementById("jobForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const statusEl = document.getElementById("status");
+      statusEl.innerText = "Submitting job post...";
+
       try {
-        const res = await fetch("https://n8n.sapidblue.in/webhook/all-job-posts");
-        const jobs = await res.json();
-        const tableBody = document.getElementById("jobTableBody");
-        tableBody.innerHTML = "";
-
-        jobs.forEach(job => {
-          const row = document.createElement("tr");
-          row.classList.add("hover:bg-gray-50");
-
-          const modes = Array.isArray(job.modes_of_search)
-            ? job.modes_of_search
-            : JSON.parse(job.modes_of_search || '[]');
-
-          row.innerHTML = `
-            <td class="p-2 border">${job.job_title || '—'}</td>
-            <td class="p-2 border">${job.workplace || '—'}</td>
-            <td class="p-2 border">${job.experience_years || '—'} yrs</td>
-            <td class="p-2 border text-green-700">${job.status || 'Submitted'}</td>
-            <td class="p-2 border">${modes.join(', ')}</td>
-            <td class="p-2 border">${new Date(job.created_at).toLocaleString()}</td>
-          `;
-          tableBody.appendChild(row);
+        const res = await fetch("https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a", {
+          method: "POST",
+          body: formData
         });
+
+        // Option A: Redirect is configured in n8n form
+        if (res.redirected) {
+          window.location.href = res.url;
+          return;
+        }
+
+        // Option B: Manually handle response (e.g., GPT generated JD)
+        const result = await res.json();
+        if (result.jd_base64 && result.job_id) {
+          const url = `review-jd.html?jd=${encodeURIComponent(result.jd_base64)}&job_id=${result.job_id}`;
+          window.location.href = url;
+        } else {
+          statusEl.innerText = "✅ Submitted. No redirect configured.";
+        }
       } catch (err) {
-        console.error("Load jobs error:", err);
-        document.getElementById("jobTableBody").innerHTML = `
-          <tr><td colspan="6" class="text-center p-4 text-red-600">Failed to load job posts.</td></tr>
-        `;
+        console.error("Submission error:", err);
+        statusEl.innerText = "❌ Failed to submit. Please try again.";
       }
-    }
-
-    loadJobs();
-
-    // Modal controls
-    const uploadModal = document.getElementById("uploadModal");
-    document.getElementById("openUploadModal").onclick = () => uploadModal.classList.remove("hidden");
-    document.getElementById("closeUploadModal").onclick = () => {
-      uploadModal.classList.add("hidden");
-      loadJobs(); // Refresh jobs when modal is closed
     };
   </script>
 </body>
