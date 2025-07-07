@@ -6,22 +6,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen p-6">
-  <div class="max-w-6xl mx-auto space-y-6">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
-      <button id="newJobBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-        + Start New Job Post
-      </button>
+    <!-- Left Column: Embedded n8n Form -->
+    <div class="bg-white p-4 rounded-lg shadow-md">
+      <h2 class="text-xl font-bold mb-4">Start a New Job Post</h2>
+      <iframe 
+        src="https://n8n.sapidblue.in/form/817fac62-34c1-442e-b757-dfa05cc4fc80"
+        class="w-full h-[700px] border rounded-lg"></iframe>
     </div>
 
-    <!-- Job Table -->
-    <div id="jobTableContainer" class="bg-white p-4 rounded-lg shadow">
-      <h2 class="text-xl font-semibold mb-4">All Job Posts</h2>
-      <table id="jobTable" class="w-full border table-auto">
+    <!-- Right Column: Job Listings Table -->
+    <div class="bg-white p-4 rounded-lg shadow-md overflow-auto">
+      <h2 class="text-xl font-bold mb-4">All Job Posts</h2>
+      <table class="w-full border table-auto text-sm">
         <thead>
-          <tr class="bg-gray-200 text-left text-sm">
+          <tr class="bg-gray-200 text-left">
             <th class="p-2 border">Title</th>
             <th class="p-2 border">Workplace</th>
             <th class="p-2 border">Experience</th>
@@ -36,23 +36,13 @@
       </table>
     </div>
 
-    <!-- iFrame Modal -->
-    <div id="formModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl p-4 relative">
-        <button id="closeForm" class="absolute top-2 right-4 text-gray-700 text-2xl">&times;</button>
-        <iframe src="https://n8n.sapidblue.in/form/817fac62-34c1-442e-b757-dfa05cc4fc80"
-                class="w-full h-[600px] border rounded-lg"></iframe>
-      </div>
-    </div>
-
   </div>
 
   <script>
-    const loadJobs = async () => {
+    async function loadJobs() {
       try {
-        const res = await fetch("https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a");
+        const res = await fetch("https://n8n.sapidblue.in/webhook/all-job-posts");
         const jobs = await res.json();
-
         const tableBody = document.getElementById("jobTableBody");
         tableBody.innerHTML = "";
 
@@ -60,7 +50,6 @@
           const row = document.createElement("tr");
           row.classList.add("hover:bg-gray-50");
 
-          // Convert modes_of_search from JSON string to list
           const modes = Array.isArray(job.modes_of_search)
             ? job.modes_of_search
             : JSON.parse(job.modes_of_search || '[]');
@@ -70,7 +59,7 @@
             <td class="p-2 border">${job.workplace || '—'}</td>
             <td class="p-2 border">${job.experience_years || '—'} yrs</td>
             <td class="p-2 border text-green-700">${job.status || 'Submitted'}</td>
-            <td class="p-2 border text-sm">${modes.join(', ')}</td>
+            <td class="p-2 border">${modes.join(', ')}</td>
             <td class="p-2 border">${new Date(job.created_at).toLocaleString()}</td>
           `;
           tableBody.appendChild(row);
@@ -81,18 +70,11 @@
           <tr><td colspan="6" class="text-center p-4 text-red-600">Failed to load job posts.</td></tr>
         `;
       }
-    };
-
-    // Modal logic
-    document.getElementById("newJobBtn").onclick = () => {
-      document.getElementById("formModal").classList.remove("hidden");
-    };
-    document.getElementById("closeForm").onclick = () => {
-      document.getElementById("formModal").classList.add("hidden");
-      loadJobs(); // Reload after form submission
-    };
+    }
 
     loadJobs();
+    // Optional: Reload every 30 seconds to reflect new submissions
+    // setInterval(loadJobs, 30000);
   </script>
 </body>
 </html>
