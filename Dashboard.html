@@ -11,9 +11,14 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
-      <button id="toggleFormBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        + Create New Job Post
-      </button>
+      <div class="space-x-2">
+        <button id="toggleFormBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          + Create New Job Post
+        </button>
+        <button id="openUploadModal" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+          📄 Upload JD (PDF)
+        </button>
+      </div>
     </div>
 
     <!-- Job Form (Initially Hidden) -->
@@ -104,19 +109,26 @@
       </table>
     </div>
 
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white p-4 rounded shadow-lg w-full max-w-3xl relative">
+        <button id="closeUploadModal" class="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black">&times;</button>
+        <iframe src="https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a"
+                class="w-full h-[600px] border rounded-lg"></iframe>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    const webhookURL = "https://n8n.sapidblue.in/webhook/submit-job"; // Change if needed
+    const webhookURL = "https://n8n.sapidblue.in/webhook/submit-job";
 
-    const jobForm = document.getElementById("jobForm");
-    const jobFormContainer = document.getElementById("jobFormContainer");
     const toggleFormBtn = document.getElementById("toggleFormBtn");
+    const jobFormContainer = document.getElementById("jobFormContainer");
     const cancelFormBtn = document.getElementById("cancelFormBtn");
+    const jobForm = document.getElementById("jobForm");
 
-    toggleFormBtn.onclick = () => {
-      jobFormContainer.classList.toggle("hidden");
-    };
+    toggleFormBtn.onclick = () => jobFormContainer.classList.toggle("hidden");
     cancelFormBtn.onclick = () => {
       jobFormContainer.classList.add("hidden");
       jobForm.reset();
@@ -124,7 +136,6 @@
 
     jobForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const formData = new FormData(jobForm);
       const data = {};
 
@@ -150,11 +161,11 @@
           jobFormContainer.classList.add("hidden");
           loadJobs();
         } else {
-          alert("Failed to submit job post.");
+          alert("Submission failed.");
         }
       } catch (err) {
-        console.error("Error submitting form:", err);
-        alert("Error occurred while submitting.");
+        console.error("Form error:", err);
+        alert("Error occurred.");
       }
     });
 
@@ -184,7 +195,7 @@
           tableBody.appendChild(row);
         });
       } catch (err) {
-        console.error("Error loading jobs:", err);
+        console.error("Load jobs error:", err);
         document.getElementById("jobTableBody").innerHTML = `
           <tr><td colspan="6" class="text-center p-4 text-red-600">Failed to load job posts.</td></tr>
         `;
@@ -192,6 +203,11 @@
     }
 
     loadJobs();
+
+    // Modal upload iframe
+    const uploadModal = document.getElementById("uploadModal");
+    document.getElementById("openUploadModal").onclick = () => uploadModal.classList.remove("hidden");
+    document.getElementById("closeUploadModal").onclick = () => uploadModal.classList.add("hidden");
   </script>
 </body>
 </html>
