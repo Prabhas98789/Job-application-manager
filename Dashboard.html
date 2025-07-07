@@ -4,13 +4,89 @@
   <meta charset="UTF-8" />
   <title>Job Automation Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --font-family: 'Open Sans', sans-serif;
+      --font-weight-normal: 400;
+      --font-weight-bold: 600;
+      --font-size-label: 14px;
+      --font-size-input: 14px;
+      --font-size-header: 20px;
+      --color-background: #fbfcfe;
+      --color-input-border: #dbdfe7;
+      --color-input-text: #71747A;
+      --color-label: #555555;
+      --color-submit-btn-bg: #ff6d5a;
+      --color-submit-btn-text: #ffffff;
+      --color-focus-border: #5a4cca;
+      --border-radius-input: 6px;
+      --padding-form-input: 12px;
+      --submit-btn-height: 48px;
+      --box-shadow-card: 0px 4px 16px rgba(99, 77, 255, 0.06);
+    }
+    .form-wrapper {
+      font-family: var(--font-family);
+      background: var(--color-background);
+      max-width: 500px;
+      margin: auto;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: var(--box-shadow-card);
+    }
+    .form-wrapper h2 {
+      font-size: var(--font-size-header);
+      color: var(--color-label);
+      margin-bottom: 16px;
+      font-weight: var(--font-weight-bold);
+    }
+    .form-field {
+      margin-bottom: 16px;
+    }
+    .form-field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-label);
+      color: var(--color-label);
+    }
+    .form-field input,
+    .form-field select {
+      width: 100%;
+      padding: var(--padding-form-input);
+      font-size: var(--font-size-input);
+      color: var(--color-input-text);
+      border: 1px solid var(--color-input-border);
+      border-radius: var(--border-radius-input);
+      background-color: #fff;
+    }
+    .form-field input:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: var(--color-focus-border);
+    }
+    .submit-btn {
+      background-color: var(--color-submit-btn-bg);
+      color: var(--color-submit-btn-text);
+      width: 100%;
+      padding: 12px;
+      height: var(--submit-btn-height);
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-input);
+      border-radius: var(--border-radius-input);
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body class="min-h-screen p-6">
   <div class="max-w-7xl mx-auto space-y-6">
 
     <!-- Header -->
     <div class="flex justify-between items-center">
-      <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
+      <div class="flex items-center space-x-3">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Logo_TV_2015.png/600px-Logo_TV_2015.png" class="h-10" alt="Logo" />
+        <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
+      </div>
       <button id="openUploadModal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
         + Upload JD & Create Job Post
       </button>
@@ -37,15 +113,55 @@
     </div>
 
     <!-- Upload Modal -->
-    <!-- Upload Modal -->
     <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-      <div class="bg-white p-4 rounded shadow-lg w-full max-w-3xl relative">
+      <div class="bg-white p-6 rounded shadow-lg w-full max-w-xl relative">
         <button id="closeUploadModal" class="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black">&times;</button>
-        <iframe src="https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a"
-                class="w-full h-[600px] border rounded-lg"></iframe>
+        <div class="form-wrapper">
+          <h2>Create Job Post</h2>
+          <form id="jobForm">
+            <div class="form-field">
+              <label for="job_title">Job Title</label>
+              <input type="text" name="job_title" id="job_title" required>
+            </div>
+
+            <div class="form-field">
+              <label for="workplace">Workplace</label>
+              <select name="workplace" id="workplace" required>
+                <option value="ON_SITE">On-site</option>
+                <option value="HYBRID">Hybrid</option>
+                <option value="REMOTE">Remote</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="email">Your Email</label>
+              <input type="email" name="email" id="email" required>
+            </div>
+
+            <div class="form-field">
+              <label for="experience_years">Experience (Years)</label>
+              <input type="number" name="experience_years" id="experience_years" required>
+            </div>
+
+            <div class="form-field">
+              <label for="key_skills">Key Skills</label>
+              <input type="text" name="key_skills" id="key_skills" required>
+            </div>
+
+            <div class="form-field">
+              <label for="modes">Modes of Search</label>
+              <select name="modes" id="modes" multiple>
+                <option value="Telegram">Telegram</option>
+                <option value="LinkedIn Job Posting">LinkedIn</option>
+                <option value="WhatsApp Groups">WhatsApp</option>
+              </select>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit</button>
+          </form>
+        </div>
       </div>
     </div>
-
   </div>
 
   <script>
@@ -84,12 +200,41 @@
 
     loadJobs();
 
-    // Modal controls
     const uploadModal = document.getElementById("uploadModal");
     document.getElementById("openUploadModal").onclick = () => uploadModal.classList.remove("hidden");
     document.getElementById("closeUploadModal").onclick = () => {
       uploadModal.classList.add("hidden");
-      loadJobs(); // Refresh jobs when modal is closed
+      loadJobs(); // Refresh job posts after closing form
+    };
+
+    document.getElementById("jobForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        job_title: form.job_title.value,
+        workplace: form.workplace.value,
+        email: form.email.value,
+        experience_years: form.experience_years.value,
+        key_skills: form.key_skills.value,
+        modes_of_search: Array.from(form.modes.selectedOptions).map(o => o.value),
+        created_at: new Date().toISOString(),
+        status: 'Submitted'
+      };
+
+      try {
+        await fetch("https://n8n.sapidblue.in/webhook/store-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        alert("Job Submitted!");
+        uploadModal.classList.add("hidden");
+        loadJobs();
+        form.reset();
+      } catch (err) {
+        alert("Submission failed!");
+        console.error(err);
+      }
     };
   </script>
 </body>
