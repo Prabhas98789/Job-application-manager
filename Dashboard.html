@@ -11,82 +11,9 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
-      <div class="space-x-2">
-        <button id="toggleFormBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          + Create New Job Post
-        </button>
-        <button id="openUploadModal" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-          📄 Upload JD (PDF)
-        </button>
-      </div>
-    </div>
-
-    <!-- Job Form (Initially Hidden) -->
-    <div id="jobFormContainer" class="hidden bg-white p-6 rounded-lg shadow-md">
-      <form id="jobForm" class="space-y-4">
-        <input type="hidden" name="company_id" value="79089473" />
-        <input type="hidden" name="location_id" value="115910933" />
-
-        <div>
-          <label class="font-semibold">Job Title</label>
-          <input name="job_title" type="text" required class="w-full border rounded px-3 py-2" />
-        </div>
-
-        <div>
-          <label class="font-semibold">Workplace</label>
-          <select name="workplace" required class="w-full border rounded px-3 py-2">
-            <option value="ON_SITE">ON_SITE</option>
-            <option value="HYBRID">HYBRID</option>
-            <option value="REMOTE">REMOTE</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="font-semibold">Employment Status</label>
-          <select name="employment_status" required class="w-full border rounded px-3 py-2">
-            <option value="FULL_TIME">FULL_TIME</option>
-            <option value="PART_TIME">PART_TIME</option>
-            <option value="CONTRACT">CONTRACT</option>
-            <option value="TEMPORARY">TEMPORARY</option>
-            <option value="OTHER">OTHER</option>
-            <option value="VOLUNTEER">VOLUNTEER</option>
-            <option value="INTERNSHIP">INTERNSHIP</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="font-semibold">Your Email</label>
-          <input name="email" type="email" required class="w-full border rounded px-3 py-2" />
-        </div>
-
-        <div>
-          <label class="font-semibold">Experience Years</label>
-          <input name="experience_years" type="number" required class="w-full border rounded px-3 py-2" />
-        </div>
-
-        <div>
-          <label class="font-semibold">Key Skills</label>
-          <input name="key_skills" type="text" required class="w-full border rounded px-3 py-2" />
-        </div>
-
-        <div>
-          <label class="font-semibold">Modes of Search</label>
-          <select name="modes_of_search" multiple required class="w-full border rounded px-3 py-2">
-            <option value="Telegram">Telegram</option>
-            <option value="Social Media posting">Social Media posting</option>
-            <option value="Linkedin Job posting">Linkedin Job posting</option>
-            <option value="Whatsapp Groups">Whatsapp Groups</option>
-          </select>
-          <p class="text-xs text-gray-500">Hold Ctrl (Cmd on Mac) to select multiple</p>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-            Submit Job
-          </button>
-          <button type="button" id="cancelFormBtn" class="text-gray-500 hover:underline">Cancel</button>
-        </div>
-      </form>
+      <button id="openUploadModal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        + Upload JD & Create Job Post
+      </button>
     </div>
 
     <!-- Job Table -->
@@ -121,54 +48,6 @@
   </div>
 
   <script>
-    const webhookURL = "https://n8n.sapidblue.in/webhook/submit-job";
-
-    const toggleFormBtn = document.getElementById("toggleFormBtn");
-    const jobFormContainer = document.getElementById("jobFormContainer");
-    const cancelFormBtn = document.getElementById("cancelFormBtn");
-    const jobForm = document.getElementById("jobForm");
-
-    toggleFormBtn.onclick = () => jobFormContainer.classList.toggle("hidden");
-    cancelFormBtn.onclick = () => {
-      jobFormContainer.classList.add("hidden");
-      jobForm.reset();
-    };
-
-    jobForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(jobForm);
-      const data = {};
-
-      formData.forEach((value, key) => {
-        if (key === "modes_of_search") {
-          if (!data[key]) data[key] = [];
-          data[key].push(value);
-        } else {
-          data[key] = value;
-        }
-      });
-
-      try {
-        const res = await fetch(webhookURL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-        if (res.ok) {
-          alert("Job posted successfully!");
-          jobForm.reset();
-          jobFormContainer.classList.add("hidden");
-          loadJobs();
-        } else {
-          alert("Submission failed.");
-        }
-      } catch (err) {
-        console.error("Form error:", err);
-        alert("Error occurred.");
-      }
-    });
-
     async function loadJobs() {
       try {
         const res = await fetch("https://n8n.sapidblue.in/webhook/all-job-posts");
@@ -204,10 +83,13 @@
 
     loadJobs();
 
-    // Modal upload iframe
+    // Modal controls
     const uploadModal = document.getElementById("uploadModal");
     document.getElementById("openUploadModal").onclick = () => uploadModal.classList.remove("hidden");
-    document.getElementById("closeUploadModal").onclick = () => uploadModal.classList.add("hidden");
+    document.getElementById("closeUploadModal").onclick = () => {
+      uploadModal.classList.add("hidden");
+      loadJobs(); // Refresh jobs when modal is closed
+    };
   </script>
 </body>
 </html>
