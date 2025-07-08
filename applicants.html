@@ -29,7 +29,7 @@
           </tr>
         </thead>
         <tbody id="applicantsTableBody">
-          <!-- Dynamically loaded rows -->
+          <!-- Dynamic Rows -->
         </tbody>
       </table>
     </div>
@@ -49,79 +49,87 @@
       try {
         const res = await fetch(`https://n8n.sapidblue.in/webhook/fetch-job-applicants?id=${jobId}`);
         const applicants = await res.json();
-
         tbody.innerHTML = "";
 
         if (!applicants.length) {
           tbody.innerHTML = `
             <tr class="text-center text-gray-500">
               <td colspan="7" class="p-4 italic">No applicants yet. Waiting for responses.</td>
-            </tr>
-          `;
+            </tr>`;
           return;
         }
 
         applicants.forEach(app => {
-          tbody.innerHTML += `
-            <tr class="hover:bg-gray-50">
-              <td class="p-2 border">${app.full_name || '—'}</td>
-              <td class="p-2 border">${app.email || '—'}</td>
-              <td class="p-2 border">${app.source || '—'}</td>
-              <td class="p-2 border text-center">${app.application_score || 0}</td>
-              <td class="p-2 border">
-                <select onchange="updateStatus('${app.id}', this.value)" class="border rounded px-1 py-0.5 text-sm">
-                  <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
-                  <option ${app.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
-                  <option ${app.status === 'Interviewed' ? 'selected' : ''}>Interviewed</option>
-                  <option ${app.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
-                  <option ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
-                  <option ${app.status === 'Hired' ? 'selected' : ''}>Hired</option>
-                </select>
-              </td>
-              <td class="p-2 border">
-                <textarea onchange="updateNote('${app.id}', this.value)" class="w-full text-sm p-1 border rounded">${app.notes || ''}</textarea>
-              </td>
-              <td class="p-2 border">
-                <button onclick="sendApplicant('${app.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">Send</button>
-              </td>
-            </tr>
+          const isRejected = app.status === 'Rejected';
+          const row = document.createElement("tr");
+          row.className = isRejected ? "bg-gray-100 text-gray-500" : "hover:bg-gray-50";
+
+          row.innerHTML = `
+            <td class="p-2 border">${app.full_name || '—'}</td>
+            <td class="p-2 border">
+              <input ${isRejected ? 'disabled' : ''} value="${app.email}" class="email-input w-full text-sm p-1 border rounded" />
+            </td>
+            <td class="p-2 border">${app.source || '—'}</td>
+            <td class="p-2 border text-center">
+              <input ${isRejected ? 'disabled' : ''} type="number" value="${app.application_score}" class="score-input w-16 text-sm p-1 border rounded text-center" />
+            </td>
+            <td class="p-2 border">
+              <select ${isRejected ? 'disabled' : ''} class="status-select border rounded px-1 py-0.5 text-sm">
+                <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
+                <option ${app.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
+                <option ${app.status === 'Interviewed' ? 'selected' : ''}>Interviewed</option>
+                <option ${app.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                <option ${app.status === 'Hired' ? 'selected' : ''}>Hired</option>
+                <option ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+              </select>
+            </td>
+            <td class="p-2 border">
+              <textarea ${isRejected ? 'disabled' : ''} class="notes-input w-full text-sm p-1 border rounded">${app.notes || ''}</textarea>
+            </td>
+            <td class="p-2 border text-center">
+              <button ${isRejected ? 'disabled' : ''} onclick="submitChanges('${app.id}', this)" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Save</button>
+            </td>
           `;
+
+          tbody.appendChild(row);
         });
       } catch (err) {
-        console.error("Error loading applicants:", err);
-        tbody.innerHTML = `
-          <tr><td colspan="7" class="text-center p-4 text-red-600">Failed to load applicants.</td></tr>
-        `;
+        console.error("Load error:", err);
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-600">Failed to load applicants.</td></tr>`;
       }
     }
 
-    async function updateStatus(applicantId, status) {
+    async function submitChanges(applicantId, btn) {
+      const row = btn.closest("tr");
+      const email = row.querySelector(".email-input").value;
+      const score = parseInt(row.querySelector(".score-input").value);
+      const status = row.querySelector(".status-select").value;
+      const notes = row.querySelector(".notes-input").value;
+
       try {
-        await fetch("https://n8n.sapidblue.in/webhook/update-applicant-status", {
+        const res = await fetch("https://n8n.sapidblue.in/webhook/update-applicant", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ applicant_id: applicantId, status })
+          body: JSON.stringify({
+            job_id: jobId,
+            applicant_id: applicantId,
+            email,
+            application_score: score,
+            status,
+            notes
+          })
         });
-      } catch (err) {
-        alert("Failed to update status.");
-      }
-    }
 
-    async function updateNote(applicantId, note) {
-      try {
-        await fetch("https://n8n.sapidblue.in/webhook/update-applicant-note", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ applicant_id: applicantId, note })
-        });
+        if (res.ok) {
+          alert("✅ Applicant updated successfully.");
+          if (status === 'Rejected') loadApplicants(); // Refresh if rejected
+        } else {
+          alert("❌ Failed to update. Status: " + res.status);
+        }
       } catch (err) {
-        alert("Failed to save note.");
+        console.error("Update error:", err);
+        alert("⚠️ Update failed. Check console.");
       }
-    }
-
-    function sendApplicant(applicantId) {
-      // You can extend this to open a modal or redirect to a platform
-      alert(`Sending applicant ${applicantId}...`);
     }
 
     loadApplicants();
