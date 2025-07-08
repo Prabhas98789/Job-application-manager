@@ -72,7 +72,7 @@
             ? `<a href="${job.jd_drive_link}" target="_blank" download class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Download JD</a>`
             : '';
 
-          const viewBtn = job.status === 'post'
+          const viewBtn = job.status?.toLowerCase() === 'post'
             ? `<button onclick="postJob('${job.id}')" class="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700">Post</button>`
             : job.status !== 'Loading'
               ? `<a href="jd.html?id=${job.id}" target="_blank" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">View</a>`
@@ -125,7 +125,7 @@
     });
 
     function postJob(id) {
-      window.open(`https://n8n.sapidblue.in/webhook/submit-jd?id=${id}`, '_blank');
+      window.open(`https://prabhas98789.github.io/Job-application-manager/submit-jd.html?id=${id}`, '_blank');
     }
   </script>
 </body>
