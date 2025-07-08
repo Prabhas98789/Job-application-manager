@@ -36,39 +36,17 @@
       </table>
     </div>
 
-    <!-- Custom Form Modal -->
+    <!-- Modal with embedded iFrame -->
     <div id="formModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-      <div class="bg-white p-6 rounded shadow-lg w-full max-w-2xl relative">
+      <div class="bg-white p-4 rounded shadow-lg w-full max-w-4xl h-[90vh] relative flex flex-col">
         <button id="closeFormModal" class="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black">&times;</button>
-
         <h2 class="text-xl font-bold mb-4">Create Job Post</h2>
-        <form id="jobForm" class="space-y-4">
-          <input type="text" name="job_title" placeholder="Job Title" required class="border rounded p-2 w-full" />
-
-          <select name="workplace" required class="border rounded p-2 w-full">
-            <option value="">Select Workplace</option>
-            <option value="ON_SITE">On-Site</option>
-            <option value="HYBRID">Hybrid</option>
-            <option value="REMOTE">Remote</option>
-          </select>
-
-          <input type="email" name="email" placeholder="Your Email" required class="border rounded p-2 w-full" />
-
-          <input type="number" name="experience_years" placeholder="Experience (Years)" required class="border rounded p-2 w-full" />
-
-          <input type="text" name="key_skills" placeholder="Key Skills (comma-separated)" required class="border rounded p-2 w-full" />
-
-          <select name="modes_of_search" multiple required class="border rounded p-2 w-full">
-            <option value="Telegram">Telegram</option>
-            <option value="Social Media posting">Social Media posting</option>
-            <option value="Linkedin Job posting">Linkedin Job posting</option>
-            <option value="Whatsapp Groups">Whatsapp Groups</option>
-          </select>
-
-          <input type="file" name="jd_file" accept="application/pdf" required class="border rounded p-2 w-full" />
-
-          <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2 w-full">Submit</button>
-        </form>
+        <iframe 
+          id="jobFormIframe"
+          src="https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a"
+          class="w-full flex-grow border rounded"
+          frameborder="0"
+        ></iframe>
       </div>
     </div>
 
@@ -110,35 +88,17 @@
 
     loadJobs();
 
-    // Modal controls
     const formModal = document.getElementById("formModal");
     document.getElementById("openFormModal").onclick = () => formModal.classList.remove("hidden");
     document.getElementById("closeFormModal").onclick = () => formModal.classList.add("hidden");
 
-    // Form submit logic
-    document.getElementById("jobForm").onsubmit = async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form);
-
-      try {
-        // Send to n8n form backend
-        const res = await fetch("https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a", {
-          method: "POST",
-          body: formData
-        });
-
-        if (res.redirected) {
-          window.location.href = res.url;
-        } else {
-          const response = await res.json();
-          window.location.href = `review-jd.html?jd=${response.jd_base64}&job_id=${response.job_id}`;
-        }
-      } catch (err) {
-        console.error("Submit error:", err);
-        alert("⚠️ Failed to submit job post.");
+    // Listen for form submission message from iframe
+    window.addEventListener("message", (event) => {
+      if (event.data === "job-form-submitted") {
+        formModal.classList.add("hidden");
+        loadJobs(); // Refresh job list
       }
-    };
+    });
   </script>
 </body>
 </html>
