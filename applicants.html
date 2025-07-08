@@ -7,13 +7,14 @@
 </head>
 <body class="min-h-screen bg-gray-100 p-6 text-gray-900">
   <div class="max-w-7xl mx-auto space-y-6">
+
     <!-- Header -->
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Candidate Applications</h1>
       <a href="Dashboard.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
     </div>
 
-    <!-- Table -->
+    <!-- Applicants Table -->
     <div class="bg-white p-4 rounded-lg shadow overflow-auto">
       <h2 class="text-xl font-semibold mb-4">Applicants List</h2>
       <table class="w-full border text-sm table-auto">
@@ -25,6 +26,7 @@
             <th class="p-2 border">Score</th>
             <th class="p-2 border">Status</th>
             <th class="p-2 border">Notes</th>
+            <th class="p-2 border">Resume</th>
             <th class="p-2 border">Actions</th>
           </tr>
         </thead>
@@ -42,7 +44,7 @@
 
     async function loadApplicants() {
       if (!jobId) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-600">Missing Job ID</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4 text-red-600">Missing Job ID</td></tr>`;
         return;
       }
 
@@ -52,7 +54,7 @@
         tbody.innerHTML = "";
 
         if (!applicants.length) {
-          tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 italic text-gray-500">No applicants yet.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4 italic text-gray-500">No applicants yet.</td></tr>`;
           return;
         }
 
@@ -60,13 +62,17 @@
           tbody.innerHTML += `
             <tr id="row-${app.id}" class="hover:bg-gray-50">
               <td class="p-2 border">${app.full_name || '—'}</td>
+
               <td class="p-2 border">
                 <input type="text" class="input-email w-full bg-transparent" value="${app.email || ''}" readonly />
               </td>
+
               <td class="p-2 border">${app.source || '—'}</td>
+
               <td class="p-2 border text-center">
-                <input type="number" class="input-score w-full bg-transparent text-center" value="${app.application_score || 0}" readonly />
+                <input type="number" class="input-score w-full text-center bg-gray-100 text-gray-600" value="${app.application_score || 0}" readonly />
               </td>
+
               <td class="p-2 border">
                 <select class="input-status w-full bg-transparent" disabled>
                   <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
@@ -77,9 +83,15 @@
                   <option ${app.status === 'Hired' ? 'selected' : ''}>Hired</option>
                 </select>
               </td>
+
               <td class="p-2 border">
-                <textarea class="input-notes w-full bg-transparent">${app.notes || ''}</textarea>
+                <textarea class="input-notes w-full bg-transparent" readonly>${app.notes || ''}</textarea>
               </td>
+
+              <td class="p-2 border text-center">
+                <a href="${app.resume_link}" target="_blank" class="bg-blue-600 text-white px-2 py-1 text-xs rounded hover:bg-blue-700">View</a>
+              </td>
+
               <td class="p-2 border text-center">
                 <button onclick="toggleEdit('${app.id}')" class="btn-toggle bg-yellow-500 text-white px-2 py-1 text-xs rounded hover:bg-yellow-600">Edit</button>
               </td>
@@ -88,14 +100,13 @@
         });
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-600">Error loading applicants</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4 text-red-600">Error loading applicants.</td></tr>`;
       }
     }
 
     async function saveApplicant(applicantId) {
       const row = document.getElementById(`row-${applicantId}`);
       const email = row.querySelector('.input-email').value;
-      const score = parseInt(row.querySelector('.input-score').value);
       const status = row.querySelector('.input-status').value;
       const notes = row.querySelector('.input-notes').value;
 
@@ -107,45 +118,44 @@
             applicant_id: applicantId,
             job_id: jobId,
             email,
-            application_score: score,
             status,
             notes
           })
         });
 
         if (res.ok) {
-          alert('✅ Updated successfully!');
+          alert("✅ Updated successfully!");
           toggleEdit(applicantId, true);
         } else {
-          alert('❌ Failed to update');
+          alert("❌ Update failed");
         }
       } catch (err) {
         console.error(err);
-        alert('⚠️ Network error');
+        alert("⚠️ Network error");
       }
     }
 
     function toggleEdit(applicantId, reset = false) {
       const row = document.getElementById(`row-${applicantId}`);
-      const inputs = row.querySelectorAll('input, select, textarea');
+      const emailInput = row.querySelector('.input-email');
+      const statusSelect = row.querySelector('.input-status');
+      const notesArea = row.querySelector('.input-notes');
       const button = row.querySelector('.btn-toggle');
 
-      if (button.innerText === "Edit" && !reset) {
-        inputs.forEach(input => input.removeAttribute('readonly'));
-        inputs.forEach(input => input.removeAttribute('disabled'));
-        row.querySelector('.input-notes').style.backgroundColor = '#fff';
-        button.innerText = "Save";
-        button.className = "btn-toggle bg-green-600 text-white px-2 py-1 text-xs rounded hover:bg-green-700";
-      } else {
-        inputs.forEach(input => input.setAttribute('readonly', true));
-        inputs.forEach(input => input.setAttribute('disabled', true));
-        row.querySelector('.input-notes').style.backgroundColor = 'transparent';
-        button.innerText = "Edit";
-        button.className = "btn-toggle bg-yellow-500 text-white px-2 py-1 text-xs rounded hover:bg-yellow-600";
+      const isEditing = button.innerText === "Edit" && !reset;
 
-        if (!reset) {
-          saveApplicant(applicantId);
-        }
+      emailInput.readOnly = !isEditing;
+      statusSelect.disabled = !isEditing;
+      notesArea.readOnly = !isEditing;
+      notesArea.style.backgroundColor = isEditing ? "#fff" : "transparent";
+
+      button.innerText = isEditing ? "Save" : "Edit";
+      button.className = isEditing
+        ? "btn-toggle bg-green-600 text-white px-2 py-1 text-xs rounded hover:bg-green-700"
+        : "btn-toggle bg-yellow-500 text-white px-2 py-1 text-xs rounded hover:bg-yellow-600";
+
+      if (!isEditing && !reset) {
+        saveApplicant(applicantId);
       }
     }
 
