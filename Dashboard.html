@@ -75,7 +75,7 @@
           const viewBtn = job.status?.toLowerCase() === 'post'
             ? `<button onclick="postJob('${job.id}')" class="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700">Post</button>`
             : job.status !== 'Loading'
-              ? `<a href="jd.html?id=${job.id}" target="_blank" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">View</a>`
+              ? `<a href="applicants.html?id=${job.id}" target="_blank" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">View</a>`
               : `<button disabled title="JD is still processing..." class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-xs cursor-not-allowed">View</button>`;
 
           row.innerHTML = `
