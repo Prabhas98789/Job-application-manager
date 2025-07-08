@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Applicant Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 p-6 text-gray-900">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Candidate Applications</h1>
+      <a href="Dashboard.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white p-4 rounded-lg shadow overflow-auto">
+      <h2 class="text-xl font-semibold mb-4">Applicants List</h2>
+      <table class="w-full border text-sm table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-2 border">Name</th>
+            <th class="p-2 border">Email</th>
+            <th class="p-2 border">Source</th>
+            <th class="p-2 border">Score</th>
+            <th class="p-2 border">Status</th>
+            <th class="p-2 border">Notes</th>
+            <th class="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="applicantsTableBody">
+          <!-- Dynamically loaded rows -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get("id");
+    const tbody = document.getElementById("applicantsTableBody");
+
+    async function loadApplicants() {
+      if (!jobId) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-600">Missing Job ID</td></tr>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://n8n.sapidblue.in/webhook/fetch-job-applicants?id=${jobId}`);
+        const applicants = await res.json();
+
+        tbody.innerHTML = "";
+
+        if (!applicants.length) {
+          tbody.innerHTML = `
+            <tr class="text-center text-gray-500">
+              <td colspan="7" class="p-4 italic">No applicants yet. Waiting for responses.</td>
+            </tr>
+          `;
+          return;
+        }
+
+        applicants.forEach(app => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-gray-50">
+              <td class="p-2 border">${app.full_name || '—'}</td>
+              <td class="p-2 border">${app.email || '—'}</td>
+              <td class="p-2 border">${app.source || '—'}</td>
+              <td class="p-2 border text-center">${app.application_score || 0}</td>
+              <td class="p-2 border">
+                <select onchange="updateStatus('${app.id}', this.value)" class="border rounded px-1 py-0.5 text-sm">
+                  <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
+                  <option ${app.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
+                  <option ${app.status === 'Interviewed' ? 'selected' : ''}>Interviewed</option>
+                  <option ${app.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                  <option ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                  <option ${app.status === 'Hired' ? 'selected' : ''}>Hired</option>
+                </select>
+              </td>
+              <td class="p-2 border">
+                <textarea onchange="updateNote('${app.id}', this.value)" class="w-full text-sm p-1 border rounded">${app.notes || ''}</textarea>
+              </td>
+              <td class="p-2 border">
+                <button onclick="sendApplicant('${app.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">Send</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error("Error loading applicants:", err);
+        tbody.innerHTML = `
+          <tr><td colspan="7" class="text-center p-4 text-red-600">Failed to load applicants.</td></tr>
+        `;
+      }
+    }
+
+    async function updateStatus(applicantId, status) {
+      try {
+        await fetch("https://n8n.sapidblue.in/webhook/update-applicant-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicant_id: applicantId, status })
+        });
+      } catch (err) {
+        alert("Failed to update status.");
+      }
+    }
+
+    async function updateNote(applicantId, note) {
+      try {
+        await fetch("https://n8n.sapidblue.in/webhook/update-applicant-note", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicant_id: applicantId, note })
+        });
+      } catch (err) {
+        alert("Failed to save note.");
+      }
+    }
+
+    function sendApplicant(applicantId) {
+      // You can extend this to open a modal or redirect to a platform
+      alert(`Sending applicant ${applicantId}...`);
+    }
+
+    loadApplicants();
+  </script>
+</body>
+</html>
