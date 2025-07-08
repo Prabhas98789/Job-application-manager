@@ -43,7 +43,6 @@
         <h2 class="text-xl font-bold mb-4">Create Job Post</h2>
         <iframe 
           id="jobFormIframe"
-          src="https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a"
           class="w-full flex-grow border rounded"
           frameborder="0"
         ></iframe>
@@ -89,13 +88,25 @@
     loadJobs();
 
     const formModal = document.getElementById("formModal");
-    document.getElementById("openFormModal").onclick = () => formModal.classList.remove("hidden");
-    document.getElementById("closeFormModal").onclick = () => formModal.classList.add("hidden");
+    const iframe = document.getElementById("jobFormIframe");
+
+    document.getElementById("openFormModal").onclick = () => {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      iframe.src = `https://n8n.sapidblue.in/form/52fed556-6cbd-49d2-9172-dc79925b787a?t=${timestamp}`;
+      formModal.classList.remove("hidden");
+    };
+
+    document.getElementById("closeFormModal").onclick = () => {
+      formModal.classList.add("hidden");
+      iframe.src = ""; // Clear iframe to prevent form resubmission warnings
+    };
 
     // Listen for form submission message from iframe
     window.addEventListener("message", (event) => {
       if (event.data === "job-form-submitted") {
         formModal.classList.add("hidden");
+        iframe.src = ""; // Reset iframe
         loadJobs(); // Refresh job list
       }
     });
