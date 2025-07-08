@@ -28,6 +28,7 @@
             <th class="p-2 border">Status</th>
             <th class="p-2 border">Modes</th>
             <th class="p-2 border">Posted At</th>
+            <th class="p-2 border">Actions</th>
           </tr>
         </thead>
         <tbody id="jobTableBody">
@@ -63,9 +64,17 @@
           const row = document.createElement("tr");
           row.classList.add("hover:bg-gray-50");
 
-          const modes = Array.isArray(job.modes_of_search)
-            ? job.modes_of_search
-            : JSON.parse(job.modes_of_search || '[]');
+          const modes = Array.isArray(job.modes)
+            ? job.modes
+            : JSON.parse(job.modes || '[]');
+
+          const downloadBtn = job.jd_drive_link
+            ? `<a href="${job.jd_drive_link}" target="_blank" download class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Download JD</a>`
+            : '';
+
+          const viewBtn = job.status !== 'Loading'
+            ? `<a href="jd.html?id=${job.id}" target="_blank" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">View</a>`
+            : `<button disabled title="JD is still processing..." class="bg-gray-300 text-gray-600 px-2 py-1 rounded text-xs cursor-not-allowed">View</button>`;
 
           row.innerHTML = `
             <td class="p-2 border">${job.job_title || '—'}</td>
@@ -74,13 +83,17 @@
             <td class="p-2 border text-green-700">${job.status || 'Submitted'}</td>
             <td class="p-2 border">${modes.join(', ')}</td>
             <td class="p-2 border">${new Date(job.created_at).toLocaleString()}</td>
+            <td class="p-2 border space-x-2">
+              ${downloadBtn}
+              ${viewBtn}
+            </td>
           `;
           tableBody.appendChild(row);
         });
       } catch (err) {
         console.error("Load jobs error:", err);
         document.getElementById("jobTableBody").innerHTML = `
-          <tr><td colspan="6" class="text-center p-4 text-red-600">Failed to load job posts.</td></tr>
+          <tr><td colspan="7" class="text-center p-4 text-red-600">Failed to load job posts.</td></tr>
         `;
       }
     }
@@ -91,7 +104,6 @@
     const iframe = document.getElementById("jobFormIframe");
 
     document.getElementById("openFormModal").onclick = () => {
-      // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       iframe.src = `https://n8n.sapidblue.in/form/cf3cde1b-e2b4-4d25-85d8-cac9eaedd456?t=${timestamp}`;
       formModal.classList.remove("hidden");
@@ -99,15 +111,14 @@
 
     document.getElementById("closeFormModal").onclick = () => {
       formModal.classList.add("hidden");
-      iframe.src = ""; // Clear iframe to prevent form resubmission warnings
+      iframe.src = "";
     };
 
-    // Listen for form submission message from iframe
     window.addEventListener("message", (event) => {
       if (event.data === "job-form-submitted") {
         formModal.classList.add("hidden");
-        iframe.src = ""; // Reset iframe
-        loadJobs(); // Refresh job list
+        iframe.src = "";
+        loadJobs();
       }
     });
   </script>
