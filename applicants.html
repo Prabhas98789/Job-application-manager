@@ -29,7 +29,7 @@
           </tr>
         </thead>
         <tbody id="applicantsTableBody">
-          <!-- Dynamic Rows -->
+          <!-- Dynamically loaded -->
         </tbody>
       </table>
     </div>
@@ -52,101 +52,100 @@
         tbody.innerHTML = "";
 
         if (!applicants.length) {
-          tbody.innerHTML = `
-            <tr class="text-center text-gray-500">
-              <td colspan="7" class="p-4 italic">No applicants yet. Waiting for responses.</td>
-            </tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 italic text-gray-500">No applicants yet.</td></tr>`;
           return;
         }
 
         applicants.forEach(app => {
-          const isRejected = app.status === 'Rejected';
-          const row = document.createElement("tr");
-          row.className = isRejected ? "bg-gray-100 text-gray-500" : "hover:bg-gray-50";
-
-          row.innerHTML = `
-            <td class="p-2 border">${app.full_name || '—'}</td>
-            <td class="p-2 border">
-              <input disabled value="${app.email}" class="email-input w-full text-sm p-1 border rounded bg-white" />
-            </td>
-            <td class="p-2 border">${app.source || '—'}</td>
-            <td class="p-2 border text-center">
-              <input disabled type="number" value="${app.application_score}" class="score-input w-16 text-sm p-1 border rounded text-center bg-white" />
-            </td>
-            <td class="p-2 border">
-              <select disabled class="status-select border rounded px-1 py-0.5 text-sm bg-white">
-                <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
-                <option ${app.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
-                <option ${app.status === 'Interviewed' ? 'selected' : ''}>Interviewed</option>
-                <option ${app.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
-                <option ${app.status === 'Hired' ? 'selected' : ''}>Hired</option>
-                <option ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
-              </select>
-            </td>
-            <td class="p-2 border">
-              <textarea disabled class="notes-input w-full text-sm p-1 border rounded bg-white">${app.notes || ''}</textarea>
-            </td>
-            <td class="p-2 border text-center">
-              ${isRejected ? '' : `<button onclick="toggleEdit(this, '${app.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">Edit</button>`}
-            </td>
+          tbody.innerHTML += `
+            <tr id="row-${app.id}" class="hover:bg-gray-50">
+              <td class="p-2 border">${app.full_name || '—'}</td>
+              <td class="p-2 border">
+                <input type="text" class="input-email w-full bg-transparent" value="${app.email || ''}" readonly />
+              </td>
+              <td class="p-2 border">${app.source || '—'}</td>
+              <td class="p-2 border text-center">
+                <input type="number" class="input-score w-full bg-transparent text-center" value="${app.application_score || 0}" readonly />
+              </td>
+              <td class="p-2 border">
+                <select class="input-status w-full bg-transparent" disabled>
+                  <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
+                  <option ${app.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
+                  <option ${app.status === 'Interviewed' ? 'selected' : ''}>Interviewed</option>
+                  <option ${app.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                  <option ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                  <option ${app.status === 'Hired' ? 'selected' : ''}>Hired</option>
+                </select>
+              </td>
+              <td class="p-2 border">
+                <textarea class="input-notes w-full bg-transparent">${app.notes || ''}</textarea>
+              </td>
+              <td class="p-2 border text-center">
+                <button onclick="toggleEdit('${app.id}')" class="btn-toggle bg-yellow-500 text-white px-2 py-1 text-xs rounded hover:bg-yellow-600">Edit</button>
+              </td>
+            </tr>
           `;
-          tbody.appendChild(row);
         });
       } catch (err) {
-        console.error("Load error:", err);
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-600">Failed to load applicants.</td></tr>`;
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-600">Error loading applicants</td></tr>`;
       }
     }
 
-    function toggleEdit(button, applicantId) {
-      const row = button.closest("tr");
-      const email = row.querySelector(".email-input");
-      const score = row.querySelector(".score-input");
-      const status = row.querySelector(".status-select");
-      const notes = row.querySelector(".notes-input");
+    async function saveApplicant(applicantId) {
+      const row = document.getElementById(`row-${applicantId}`);
+      const email = row.querySelector('.input-email').value;
+      const score = parseInt(row.querySelector('.input-score').value);
+      const status = row.querySelector('.input-status').value;
+      const notes = row.querySelector('.input-notes').value;
 
-      const isEditing = button.innerText === "Save";
-
-      if (isEditing) {
-        // Disable and Save
-        email.disabled = score.disabled = status.disabled = notes.disabled = true;
-        button.innerText = "Edit";
-        button.classList.remove("bg-green-600");
-        button.classList.add("bg-blue-600");
-        submitChanges(applicantId, email.value, score.value, status.value, notes.value);
-      } else {
-        // Enable Editing
-        email.disabled = score.disabled = status.disabled = notes.disabled = false;
-        button.innerText = "Save";
-        button.classList.remove("bg-blue-600");
-        button.classList.add("bg-green-600");
-      }
-    }
-
-    async function submitChanges(applicantId, email, score, status, notes) {
       try {
-        const res = await fetch("https://n8n.sapidblue.in/webhook/update-applicant", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch('https://n8n.sapidblue.in/webhook/update-applicant-full', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            job_id: jobId,
             applicant_id: applicantId,
+            job_id: jobId,
             email,
-            application_score: parseInt(score),
+            application_score: score,
             status,
             notes
           })
         });
 
         if (res.ok) {
-          if (status === 'Rejected') loadApplicants();
-          else alert("✅ Saved successfully.");
+          alert('✅ Updated successfully!');
+          toggleEdit(applicantId, true);
         } else {
-          alert("❌ Failed to save.");
+          alert('❌ Failed to update');
         }
       } catch (err) {
-        console.error("Update error:", err);
-        alert("⚠️ Failed to save changes.");
+        console.error(err);
+        alert('⚠️ Network error');
+      }
+    }
+
+    function toggleEdit(applicantId, reset = false) {
+      const row = document.getElementById(`row-${applicantId}`);
+      const inputs = row.querySelectorAll('input, select, textarea');
+      const button = row.querySelector('.btn-toggle');
+
+      if (button.innerText === "Edit" && !reset) {
+        inputs.forEach(input => input.removeAttribute('readonly'));
+        inputs.forEach(input => input.removeAttribute('disabled'));
+        row.querySelector('.input-notes').style.backgroundColor = '#fff';
+        button.innerText = "Save";
+        button.className = "btn-toggle bg-green-600 text-white px-2 py-1 text-xs rounded hover:bg-green-700";
+      } else {
+        inputs.forEach(input => input.setAttribute('readonly', true));
+        inputs.forEach(input => input.setAttribute('disabled', true));
+        row.querySelector('.input-notes').style.backgroundColor = 'transparent';
+        button.innerText = "Edit";
+        button.className = "btn-toggle bg-yellow-500 text-white px-2 py-1 text-xs rounded hover:bg-yellow-600";
+
+        if (!reset) {
+          saveApplicant(applicantId);
+        }
       }
     }
 
