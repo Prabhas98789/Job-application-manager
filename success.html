@@ -2,14 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Submitted</title>
+  <title>Job Submitted</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 3rem;
+      background-color: #f0fdf4;
+      color: #065f46;
+    }
+    .message {
+      font-size: 1.25rem;
+      margin-top: 1rem;
+    }
+  </style>
 </head>
 <body>
+  <div class="message">✅ Job Submitted Successfully! Closing in 3 seconds...</div>
+
   <script>
+    // Immediately notify parent to close modal and reload jobs
     window.parent.postMessage("job-form-submitted", "*");
+
+    // Optional fallback: after 3 seconds, close iframe by navigating away
+    setTimeout(() => {
+      window.location.href = "about:blank";
+    }, 3000);
   </script>
-  <div style="font-family:sans-serif; padding:2rem; text-align:center;">
-    ✅ Job Submitted! You can close this window.
-  </div>
 </body>
 </html>
