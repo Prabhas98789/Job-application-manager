@@ -67,14 +67,14 @@
           row.innerHTML = `
             <td class="p-2 border">${app.full_name || '—'}</td>
             <td class="p-2 border">
-              <input ${isRejected ? 'disabled' : ''} value="${app.email}" class="email-input w-full text-sm p-1 border rounded" />
+              <input disabled value="${app.email}" class="email-input w-full text-sm p-1 border rounded bg-white" />
             </td>
             <td class="p-2 border">${app.source || '—'}</td>
             <td class="p-2 border text-center">
-              <input ${isRejected ? 'disabled' : ''} type="number" value="${app.application_score}" class="score-input w-16 text-sm p-1 border rounded text-center" />
+              <input disabled type="number" value="${app.application_score}" class="score-input w-16 text-sm p-1 border rounded text-center bg-white" />
             </td>
             <td class="p-2 border">
-              <select ${isRejected ? 'disabled' : ''} class="status-select border rounded px-1 py-0.5 text-sm">
+              <select disabled class="status-select border rounded px-1 py-0.5 text-sm bg-white">
                 <option ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
                 <option ${app.status === 'Shortlisted' ? 'selected' : ''}>Shortlisted</option>
                 <option ${app.status === 'Interviewed' ? 'selected' : ''}>Interviewed</option>
@@ -84,13 +84,12 @@
               </select>
             </td>
             <td class="p-2 border">
-              <textarea ${isRejected ? 'disabled' : ''} class="notes-input w-full text-sm p-1 border rounded">${app.notes || ''}</textarea>
+              <textarea disabled class="notes-input w-full text-sm p-1 border rounded bg-white">${app.notes || ''}</textarea>
             </td>
             <td class="p-2 border text-center">
-              <button ${isRejected ? 'disabled' : ''} onclick="submitChanges('${app.id}', this)" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Save</button>
+              ${isRejected ? '' : `<button onclick="toggleEdit(this, '${app.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">Edit</button>`}
             </td>
           `;
-
           tbody.appendChild(row);
         });
       } catch (err) {
@@ -99,13 +98,32 @@
       }
     }
 
-    async function submitChanges(applicantId, btn) {
-      const row = btn.closest("tr");
-      const email = row.querySelector(".email-input").value;
-      const score = parseInt(row.querySelector(".score-input").value);
-      const status = row.querySelector(".status-select").value;
-      const notes = row.querySelector(".notes-input").value;
+    function toggleEdit(button, applicantId) {
+      const row = button.closest("tr");
+      const email = row.querySelector(".email-input");
+      const score = row.querySelector(".score-input");
+      const status = row.querySelector(".status-select");
+      const notes = row.querySelector(".notes-input");
 
+      const isEditing = button.innerText === "Save";
+
+      if (isEditing) {
+        // Disable and Save
+        email.disabled = score.disabled = status.disabled = notes.disabled = true;
+        button.innerText = "Edit";
+        button.classList.remove("bg-green-600");
+        button.classList.add("bg-blue-600");
+        submitChanges(applicantId, email.value, score.value, status.value, notes.value);
+      } else {
+        // Enable Editing
+        email.disabled = score.disabled = status.disabled = notes.disabled = false;
+        button.innerText = "Save";
+        button.classList.remove("bg-blue-600");
+        button.classList.add("bg-green-600");
+      }
+    }
+
+    async function submitChanges(applicantId, email, score, status, notes) {
       try {
         const res = await fetch("https://n8n.sapidblue.in/webhook/update-applicant", {
           method: "POST",
@@ -114,21 +132,21 @@
             job_id: jobId,
             applicant_id: applicantId,
             email,
-            application_score: score,
+            application_score: parseInt(score),
             status,
             notes
           })
         });
 
         if (res.ok) {
-          alert("✅ Applicant updated successfully.");
-          if (status === 'Rejected') loadApplicants(); // Refresh if rejected
+          if (status === 'Rejected') loadApplicants();
+          else alert("✅ Saved successfully.");
         } else {
-          alert("❌ Failed to update. Status: " + res.status);
+          alert("❌ Failed to save.");
         }
       } catch (err) {
         console.error("Update error:", err);
-        alert("⚠️ Update failed. Check console.");
+        alert("⚠️ Failed to save changes.");
       }
     }
 
