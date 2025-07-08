@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 text-gray-900">
+<head>
+  <meta charset="UTF-8" />
+  <title>Job Description View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen p-6">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Job Description</h1>
+      <a href="index.html" class="text-blue-600 underline">← Back to Dashboard</a>
+    </div>
+
+    <!-- Job Meta Info -->
+    <div id="metaContainer" class="bg-white p-4 rounded-lg shadow hidden">
+      <p><strong>Title:</strong> <span id="jobTitle"></span></p>
+      <p><strong>Status:</strong> <span id="jobStatus"></span></p>
+      <p><strong>Experience:</strong> <span id="jobExp"></span></p>
+      <p><strong>Posted On:</strong> <span id="jobCreated"></span></p>
+    </div>
+
+    <!-- JD HTML -->
+    <div id="jdContainer" class="bg-white p-6 rounded-lg shadow prose max-w-none">
+      <!-- JD content will load here -->
+    </div>
+
+    <!-- Fallback -->
+    <div id="fallbackMsg" class="text-red-600 text-center hidden">
+      Failed to load job post or JD is still processing.
+    </div>
+
+  </div>
+
+  <script>
+    async function loadJD() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get("id");
+
+      if (!id) {
+        document.getElementById("fallbackMsg").classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const res = await fetch("https://n8n.sapidblue.in/webhook/single-job-post?id=" + id);
+        const job = await res.json();
+
+        // Handle if still loading or empty JD
+        if (!job || job.status === "Loading" || !job.jd_html) {
+          document.getElementById("fallbackMsg").classList.remove("hidden");
+          return;
+        }
+
+        // Show metadata
+        document.getElementById("metaContainer").classList.remove("hidden");
+        document.getElementById("jobTitle").textContent = job.job_title || '—';
+        document.getElementById("jobStatus").textContent = job.status || '—';
+        document.getElementById("jobExp").textContent = `${job.experience_years || '—'} yrs`;
+        document.getElementById("jobCreated").textContent = new Date(job.created_at).toLocaleString();
+
+        // Show JD HTML
+        document.getElementById("jdContainer").innerHTML = job.jd_html;
+
+      } catch (err) {
+        console.error("JD load error:", err);
+        document.getElementById("fallbackMsg").classList.remove("hidden");
+      }
+    }
+
+    loadJD();
+  </script>
+</body>
+</html>
