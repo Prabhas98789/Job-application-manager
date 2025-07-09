@@ -38,7 +38,7 @@
         const job = await res.json();
 
         document.getElementById("postText").textContent =
-          `🚀 Exciting opportunity at ${job.company_id || 'our company'}! 
+          `🚀 Exciting opportunity at ${"SapidBlue Technologies" || 'our company'}! 
           We are hiring for the role of ${job.job_title} in ${job.workplace} mode. 
           Required experience: ${job.experience_years} years. 
           Apply now!`;
