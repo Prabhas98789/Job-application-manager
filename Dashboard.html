@@ -37,7 +37,7 @@
       </table>
     </div>
 
-    <!-- Modal with embedded iFrame -->
+    <!-- Modal -->
     <div id="formModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
       <div class="bg-white p-4 rounded shadow-lg w-full max-w-4xl h-[90vh] relative flex flex-col">
         <button id="closeFormModal" class="absolute top-2 right-4 text-2xl text-gray-600 hover:text-black">&times;</button>
@@ -64,31 +64,19 @@
           const row = document.createElement("tr");
           row.classList.add("hover:bg-gray-50");
 
-          const modes = Array.isArray(job.modes)
-            ? job.modes
-            : JSON.parse(job.modes || '[]');
+          const modes = Array.isArray(job.modes) ? job.modes : JSON.parse(job.modes || '[]');
+          const cleanModes = modes.map(mode => mode.trim());
 
-          const modeLinks = {
-            "LINKEDIN_JOB_POST": "Linkedin-Job-Posting.html",
-            "LINKEDIN_POST": "Linkedin-Post.html",
-            "TELEGRAM": "Telegram-Post.html",
-            "WHATSAPP": "Whatsapp-Post.html"
-          };
-
-          const modeDisplayNames = {
-            "LINKEDIN_JOB_POST": "LinkedIn Job Post",
-            "LINKEDIN_POST": "LinkedIn Post",
-            "TELEGRAM": "Telegram",
-            "WHATSAPP": "WhatsApp"
-          };
-
-          const modeHTML = modes.map(mode => {
-            const page = modeLinks[mode];
-            const label = modeDisplayNames[mode];
-            return page
-              ? `<a href="${page}?id=${job.id}" class="text-blue-600 underline hover:text-blue-800 mr-2" target="_blank">${label}</a>`
-              : '';
-          }).join('');
+          const modeLinks = cleanModes.map(mode => {
+            const slug = mode.toLowerCase().replace(/\s+/g, '-');
+            const pageMap = {
+              'telegram': 'Telegram-Post.html',
+              'social-media-posting': 'Social-Post.html',
+              'linkedin-job-posting': 'Linkedin-Job-Posting.html',
+              'whatsapp-groups': 'Whatsapp-Post.html'
+            };
+            return pageMap[slug] ? `<a href="${pageMap[slug]}?id=${job.id}" target="_blank" class="text-blue-600 underline text-xs mr-2">${mode}</a>` : mode;
+          }).join(" ");
 
           const downloadBtn = job.jd_drive_link
             ? `<a href="${job.jd_drive_link}" target="_blank" download class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Download JD</a>`
@@ -105,7 +93,7 @@
             <td class="p-2 border">${job.workplace || '—'}</td>
             <td class="p-2 border">${job.experience_years || '—'} yrs</td>
             <td class="p-2 border text-green-700">${job.status || 'Submitted'}</td>
-            <td class="p-2 border">${modeHTML || '—'}</td>
+            <td class="p-2 border">${modeLinks}</td>
             <td class="p-2 border">${new Date(job.created_at).toLocaleString()}</td>
             <td class="p-2 border space-x-2">
               ${downloadBtn}
