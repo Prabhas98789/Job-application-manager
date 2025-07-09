@@ -7,7 +7,6 @@
 </head>
 <body class="min-h-screen p-6">
   <div class="max-w-7xl mx-auto space-y-6">
-
     <!-- Header -->
     <div class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Job Automation Dashboard</h1>
@@ -49,7 +48,6 @@
         ></iframe>
       </div>
     </div>
-
   </div>
 
   <script>
@@ -64,9 +62,15 @@
           const row = document.createElement("tr");
           row.classList.add("hover:bg-gray-50");
 
-          const modes = Array.isArray(job.modes)
-            ? job.modes
-            : JSON.parse(job.modes || '[]');
+          const jobId = job.id;
+
+          const modesLinks = `
+            <div class='space-y-1'>
+              <a href="Linkedin-Job-Posting.html?id=${jobId}" class="text-blue-600 hover:underline block">LinkedIn Job Post</a>
+              <a href="Linkedin-Post.html?id=${jobId}" class="text-blue-600 hover:underline block">LinkedIn Post</a>
+              <a href="Telegram-Post.html?id=${jobId}" class="text-blue-600 hover:underline block">Telegram</a>
+              <a href="Whatsapp-Post.html?id=${jobId}" class="text-blue-600 hover:underline block">WhatsApp</a>
+            </div>`;
 
           const downloadBtn = job.jd_drive_link
             ? `<a href="${job.jd_drive_link}" target="_blank" download class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700">Download JD</a>`
@@ -83,7 +87,7 @@
             <td class="p-2 border">${job.workplace || '—'}</td>
             <td class="p-2 border">${job.experience_years || '—'} yrs</td>
             <td class="p-2 border text-green-700">${job.status || 'Submitted'}</td>
-            <td class="p-2 border">${modes.join(', ')}</td>
+            <td class="p-2 border">${modesLinks}</td>
             <td class="p-2 border">${new Date(job.created_at).toLocaleString()}</td>
             <td class="p-2 border space-x-2">
               ${downloadBtn}
