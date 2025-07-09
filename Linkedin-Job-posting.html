@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 text-gray-900">
+<head>
+  <meta charset="UTF-8" />
+  <title>LinkedIn Job Posting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen p-6">
+  <div class="max-w-3xl mx-auto bg-white rounded shadow p-6 space-y-6">
+    <h1 class="text-2xl font-bold">Preview LinkedIn Job Post</h1>
+
+    <div class="space-y-2">
+      <h2 class="text-lg font-semibold">Post Content</h2>
+      <p id="postText" class="text-gray-700">Exciting opportunity at [Company]! We are hiring for the role of [Job Title] in [Workplace] mode. Required experience: [Experience Years] years. Apply now!</p>
+    </div>
+
+    <div class="space-y-2">
+      <h2 class="text-lg font-semibold">Post Image</h2>
+      <img id="postImage" src="https://drive.google.com/uc?export=download&id=1nnIB3dqW7jb8jNcs9eAaGJFRMDU9Gxtu" alt="Default Image" class="w-full max-h-64 object-contain rounded border">
+      <input type="file" accept="image/*" id="imageUpload" class="mt-2">
+    </div>
+
+    <div class="flex gap-4">
+      <button onclick="submitPost()" id="postButton" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Post</button>
+      <button onclick="cancelPost()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+    </div>
+
+    <p id="statusMsg" class="text-sm text-gray-600"></p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get("id");
+
+    async function submitPost() {
+      const postBtn = document.getElementById("postButton");
+      postBtn.disabled = true;
+      postBtn.innerText = "Posting...";
+
+      try {
+        const res = await fetch("https://n8n.sapidblue.in/webhook/linkedin-job-post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job_id: jobId })
+        });
+
+        const msg = res.ok ? "✅ Posted successfully!" : "❌ Failed to post.";
+        document.getElementById("statusMsg").innerText = msg;
+
+        if (res.ok) postBtn.innerText = "Posted";
+        else postBtn.disabled = false;
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("statusMsg").innerText = "⚠️ Network error.";
+        postBtn.disabled = false;
+        postBtn.innerText = "Post";
+      }
+    }
+
+    function cancelPost() {
+      fetch("https://n8n.sapidblue.in/webhook/linkedin-job-cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: jobId })
+      });
+
+      document.getElementById("statusMsg").innerText = "❌ Post cancelled.";
+    }
+
+    document.getElementById("imageUpload").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById("postImage").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+</body>
+</html>
