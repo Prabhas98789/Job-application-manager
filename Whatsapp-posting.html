@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WhatsApp Job Post</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 text-gray-900 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow space-y-4">
+    <h1 class="text-2xl font-bold text-green-700">WhatsApp Job Post Preview</h1>
+
+    <!-- Image Preview -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Post Image</label>
+      <img id="previewImage" src="https://drive.google.com/uc?export=download&id=1nnIB3dqW7jb8jNcs9eAaGJFRMDU9Gxtu" class="rounded-lg w-full max-h-64 object-contain border" />
+      <input type="file" id="imageUpload" accept="image/*" class="mt-2" />
+    </div>
+
+    <!-- Message Preview -->
+    <div class="space-y-1">
+      <label class="block text-sm font-semibold">Post Text</label>
+      <textarea id="postText" class="w-full border rounded p-2 h-32 text-sm" readonly></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-4">
+      <button id="cancelBtn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+      <button id="postBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Post</button>
+    </div>
+
+    <p id="statusMessage" class="text-sm mt-4 text-green-600 hidden">✅ Successfully posted to WhatsApp</p>
+  </div>
+
+  <script>
+    const jobId = new URLSearchParams(window.location.search).get("id");
+    const postTextArea = document.getElementById("postText");
+    const imageUpload = document.getElementById("imageUpload");
+    const previewImage = document.getElementById("previewImage");
+    const postBtn = document.getElementById("postBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const statusMessage = document.getElementById("statusMessage");
+
+    let imageUrl = previewImage.src;
+
+    async function loadJobDetails() {
+      try {
+        const res = await fetch(`https://n8n.sapidblue.in/webhook/fetch-job?id=${jobId}`);
+        const job = await res.json();
+
+        const message = `*📢 ${job.job_title} Wanted!*\n🏢 Location: ${job.workplace}\n⏳ Experience: ${job.experience_years}+ yrs\n🔧 Skills: ${job.key_skills}\n\nApply Now 📧: ${job.email}`;
+        postTextArea.value = message;
+
+        // Disable if already posted
+        const checkRes = await fetch(`https://n8n.sapidblue.in/webhook/check-post-status?job_id=${jobId}&platform=whatsapp`);
+        const { posted } = await checkRes.json();
+
+        if (posted) {
+          postBtn.disabled = true;
+          postBtn.classList.add("bg-gray-300", "cursor-not-allowed");
+          postBtn.textContent = "Already Posted";
+        }
+      } catch (err) {
+        postTextArea.value = "⚠️ Could not load job data.";
+        console.error(err);
+      }
+    }
+
+    imageUpload.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          imageUrl = event.target.result;
+          previewImage.src = imageUrl;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    postBtn.onclick = async () => {
+      try {
+        const payload = {
+          job_id: jobId,
+          platform: "whatsapp",
+          text: postTextArea.value,
+          image: imageUrl
+        };
+
+        const res = await fetch("https://n8n.sapidblue.in/webhook/post-to-platform", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          statusMessage.classList.remove("hidden");
+          postBtn.disabled = true;
+          postBtn.classList.add("bg-gray-300", "cursor-not-allowed");
+          postBtn.textContent = "Posted";
+        } else {
+          alert("❌ Failed to post. Try again.");
+        }
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    };
+
+    cancelBtn.onclick = async () => {
+      try {
+        await fetch("https://n8n.sapidblue.in/webhook/cancel-platform-post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job_id: jobId, platform: "whatsapp" })
+        });
+
+        window.location.href = "index.html";
+      } catch (err) {
+        alert("Error cancelling post.");
+      }
+    };
+
+    loadJobDetails();
+  </script>
+</body>
+</html>
