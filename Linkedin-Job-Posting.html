@@ -11,18 +11,30 @@
 
     <div class="space-y-2">
       <h2 class="text-lg font-semibold">Post Content</h2>
-      <p id="postText" class="text-gray-700">Exciting opportunity at [Company]! We are hiring for the role of [Job Title] in [Workplace] mode. Required experience: [Experience Years] years. Apply now!</p>
+      <p id="postText" class="text-gray-700">
+        Exciting opportunity at [Company]! We are hiring for the role of [Job Title] in [Workplace] mode.
+        Required experience: [Experience Years] years. Apply now!
+      </p>
     </div>
 
     <div class="space-y-2">
       <h2 class="text-lg font-semibold">Post Image</h2>
-      <img id="postImage" src="https://drive.google.com/file/d/1nnIB3dqW7jb8jNcs9eAaGJFRMDU9Gxtu/view?usp=sharing" alt="Default Image" class="w-full max-h-64 object-contain rounded border">
+      <img id="postImage"
+           src="https://drive.google.com/uc?id=1nnIB3dqW7jb8jNcs9eAaGJFRMDU9Gxtu"
+           alt="Default Image"
+           class="w-full max-h-64 object-contain rounded border">
       <input type="file" accept="image/*" id="imageUpload" class="mt-2">
     </div>
 
     <div class="flex gap-4">
-      <button onclick="submitPost()" id="postButton" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Post</button>
-      <button onclick="cancelPost()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+      <button onclick="submitPost()" id="postButton"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Post
+      </button>
+      <button onclick="cancelPost()"
+              class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+        Cancel
+      </button>
     </div>
 
     <p id="statusMsg" class="text-sm text-gray-600"></p>
